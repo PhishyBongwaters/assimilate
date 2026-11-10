@@ -1,0 +1,822 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <meta name="color-scheme" content="light dark" />
+    <link rel="icon" href="data:," />
+    <title>Assimilate</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700;900&family=Rajdhani:wght@400;500;600;700&display=swap" rel="stylesheet" />
+    <style>
+      button, [role="button"], select, summary, input:not([type="checkbox"], [type="radio"]) { min-height: 2rem; }
+    </style>
+    <style>
+      :root {
+        --bg: #10140f;
+        --panel: #171d16;
+        --panel-2: #1e271e;
+        --line: #33402f;
+        --ink: #e6f2df;
+        --ink-dim: #9db894;
+        --accent: #7dff57;
+        --accent-dim: #3f7a2e;
+        --warn: #ffb340;
+        --danger: #ff5a4e;
+        --gold: #f2c14e;
+        --teal: #39c2b0;
+        --red: #e0483e;
+      }
+      @media (prefers-color-scheme: light) {
+        :root {
+          --bg: #dfe5d8;
+          --panel: #eef2e8;
+          --panel-2: #e3ead9;
+          --line: #b3c2a4;
+          --ink: #1c2618;
+          --ink-dim: #53634c;
+          --accent: #2e7d16;
+          --accent-dim: #7fae6d;
+        }
+      }
+      * { box-sizing: border-box; }
+      html, body { height: 100%; }
+      body {
+        margin: 0;
+        background: var(--bg);
+        color: var(--ink);
+        font-family: "Rajdhani", system-ui, sans-serif;
+        font-size: 17px;
+        line-height: 1.4;
+      }
+      .wrap {
+        max-width: 1080px;
+        margin: 0 auto;
+        padding: 14px 14px 28px;
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+      }
+      header.top {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: baseline;
+        gap: 6px 16px;
+      }
+      h1 {
+        font-family: "Orbitron", sans-serif;
+        font-weight: 900;
+        font-size: clamp(26px, 5vw, 40px);
+        letter-spacing: 0.14em;
+        margin: 0;
+        text-transform: uppercase;
+      }
+      h1 .borg { color: var(--accent); }
+      .tagline {
+        color: var(--ink-dim);
+        font-size: 16px;
+        font-weight: 500;
+        margin: 0;
+      }
+      .tagline em { color: var(--ink); font-style: normal; font-weight: 700; }
+
+      /* ---------- control deck ---------- */
+      .deck {
+        background: var(--panel);
+        border: 1px solid var(--line);
+        border-radius: 10px;
+        padding: 10px 12px;
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px 18px;
+        align-items: center;
+      }
+      .group { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+      .group .lbl {
+        font-family: "Orbitron", sans-serif;
+        font-size: 11px;
+        letter-spacing: 0.18em;
+        text-transform: uppercase;
+        color: var(--ink-dim);
+        margin-right: 2px;
+      }
+      button {
+        font-family: "Rajdhani", sans-serif;
+        font-weight: 600;
+        font-size: 15px;
+        color: var(--ink);
+        background: var(--panel-2);
+        border: 1px solid var(--line);
+        border-radius: 6px;
+        padding: 6px 12px;
+        min-height: 38px;
+        cursor: pointer;
+      }
+      button:hover { border-color: var(--accent-dim); }
+      button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+      button.tool[aria-pressed="true"] {
+        background: var(--accent-dim);
+        border-color: var(--accent);
+        color: #fff;
+      }
+      @media (prefers-color-scheme: light) {
+        button.tool[aria-pressed="true"] { color: #10240a; }
+      }
+      button.tool .dot {
+        display: inline-block; width: 10px; height: 10px; border-radius: 50%;
+        margin-right: 7px; vertical-align: baseline;
+      }
+      .dot-drone { background: var(--accent); box-shadow: 0 0 6px var(--accent); }
+      .dot-officer { background: var(--gold); }
+      .dot-erase { background: var(--danger); }
+      button.primary {
+        background: var(--accent-dim);
+        border-color: var(--accent);
+        color: #fff;
+      }
+      @media (prefers-color-scheme: light) { button.primary { color: #10240a; } }
+
+      /* ---------- stats ---------- */
+      .stats {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 10px;
+      }
+      @media (max-width: 560px) {
+        .stats { grid-template-columns: repeat(2, 1fr); }
+      }
+      .stat {
+        background: var(--panel);
+        border: 1px solid var(--line);
+        border-radius: 10px;
+        padding: 8px 12px 6px;
+      }
+      .stat .num {
+        font-family: "Orbitron", sans-serif;
+        font-weight: 700;
+        font-size: clamp(22px, 4.5vw, 32px);
+        line-height: 1.1;
+      }
+      .stat .cap {
+        font-size: 12.5px;
+        letter-spacing: 0.14em;
+        text-transform: uppercase;
+        color: var(--ink-dim);
+        font-weight: 600;
+      }
+      .stat.drones .num { color: var(--accent); }
+      .stat.officers .num { color: var(--gold); }
+      @media (prefers-color-scheme: light) {
+        .stat.drones .num { color: #2e7d16; }
+        .stat.officers .num { color: #9a7414; }
+      }
+
+      /* ---------- playfield ---------- */
+      .field-shell {
+        position: relative;
+        border: 1px solid var(--line);
+        border-radius: 10px;
+        overflow: hidden;
+        background: #05080a;
+      }
+      canvas#field {
+        display: block;
+        width: 100%;
+        height: min(62vh, 560px);
+        min-height: 340px;
+        touch-action: none;
+        cursor: crosshair;
+      }
+      .banner {
+        position: absolute;
+        inset: 0;
+        display: none;
+        align-items: center;
+        justify-content: center;
+        flex-direction: column;
+        gap: 8px;
+        text-align: center;
+        background: rgba(3, 10, 4, 0.78);
+        padding: 20px;
+      }
+      .banner.show { display: flex; }
+      .banner .big {
+        font-family: "Orbitron", sans-serif;
+        font-weight: 900;
+        font-size: clamp(22px, 5vw, 38px);
+        letter-spacing: 0.1em;
+        color: var(--accent);
+        text-transform: uppercase;
+        margin: 0;
+        text-shadow: 0 0 22px rgba(125, 255, 87, 0.55);
+      }
+      .banner p { margin: 0; color: #cfe8c4; font-size: 17px; max-width: 44ch; }
+      .banner button { margin-top: 6px; }
+
+      .hintbar {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 4px 18px;
+        color: var(--ink-dim);
+        font-size: 15px;
+        font-weight: 500;
+      }
+      .hintbar b { color: var(--ink); }
+
+      .howto {
+        background: var(--panel);
+        border: 1px solid var(--line);
+        border-radius: 10px;
+        padding: 12px 16px 14px;
+      }
+      .howto h2 {
+        font-family: "Orbitron", sans-serif;
+        font-size: 14px;
+        letter-spacing: 0.18em;
+        text-transform: uppercase;
+        margin: 0 0 8px;
+        color: var(--accent);
+      }
+      @media (prefers-color-scheme: light) { .howto h2 { color: #2e7d16; } }
+      .howto ul { margin: 0; padding-left: 20px; display: grid; gap: 4px; }
+      @media (min-width: 720px) { .howto ul { grid-template-columns: 1fr 1fr; gap: 4px 28px; } }
+
+      footer { color: var(--ink-dim); font-size: 14px; text-align: center; }
+    </style>
+  </head>
+  <body>
+    <div class="wrap">
+      <header class="top">
+        <h1>Assimi<span class="borg">late</span></h1>
+        <p class="tagline">We are the Borg. <em>Resistance is futile</em> — but it does take a moment.</p>
+      </header>
+
+      <section class="deck" aria-label="Game controls">
+        <div class="group" role="group" aria-label="Placement tool">
+          <span class="lbl">Deploy</span>
+          <button class="tool" id="tool-drone" aria-pressed="true"><span class="dot dot-drone"></span>Drone</button>
+          <button class="tool" id="tool-officer" aria-pressed="false"><span class="dot dot-officer"></span>Officer</button>
+          <button class="tool" id="tool-erase" aria-pressed="false"><span class="dot dot-erase"></span>Remove</button>
+        </div>
+        <div class="group">
+          <span class="lbl">Reinforce</span>
+          <button id="add-officers">+5 Officers</button>
+          <button id="add-drone">+1 Drone</button>
+        </div>
+        <div class="group">
+          <span class="lbl">Collective</span>
+          <button id="pause-btn" aria-pressed="false">Pause</button>
+          <button id="speed-btn">Speed: 1×</button>
+          <button id="sound-btn" aria-pressed="true">Sound: On</button>
+          <button id="reset-btn">Reset</button>
+        </div>
+      </section>
+
+      <section class="stats" aria-label="Collective status">
+        <div class="stat drones"><div class="num" id="st-drones">0</div><div class="cap">Drones</div></div>
+        <div class="stat officers"><div class="num" id="st-officers">0</div><div class="cap">Officers left</div></div>
+        <div class="stat"><div class="num" id="st-assimilated">0</div><div class="cap">Assimilated</div></div>
+        <div class="stat"><div class="num" id="st-adapt">+0%</div><div class="cap">Adaptation</div></div>
+      </section>
+
+      <div class="field-shell">
+        <canvas id="field" aria-label="Playfield. Tap or click to place the selected unit."></canvas>
+        <div class="banner" id="banner">
+          <p class="big">Resistance was futile</p>
+          <p id="banner-sub">Every officer on the deck has been added to the Collective.</p>
+          <button class="primary" id="banner-btn">Beam down 5 more officers</button>
+        </div>
+      </div>
+
+      <div class="hintbar">
+        <span><b>Click / tap the deck</b> to place the selected unit.</span>
+        <span><b>Drones hunt on their own</b> — you command the Collective by placement, not by orders.</span>
+      </div>
+
+      <section class="howto">
+        <h2>How assimilation works</h2>
+        <ul>
+          <li><b>Drones are basically zombies.</b> They shamble toward the nearest officer, always. Slow, stupid, inevitable.</li>
+          <li><b>Contact starts the process.</b> A drone in arm's reach injects its tubules and drains the officer's <b>Resistance</b> — watch the ring around the officer empty.</li>
+          <li><b>Officers run.</b> They're a touch slower than a drone, but if one breaks contact its Resistance slowly recovers. Corner them.</li>
+          <li><b>Swarm to speed it up.</b> Every extra drone in contact drains Resistance faster. Surround your target.</li>
+          <li><b>The Collective adapts.</b> Each assimilation makes every drone a little faster. It does not go back down.</li>
+          <li><b>Resistance hits zero → drone.</b> The officer joins the Collective and immediately starts hunting its former crewmates.</li>
+        </ul>
+      </section>
+
+      <footer>Lower your shields and surrender your ships.</footer>
+    </div>
+
+    <script>
+      "use strict";
+      var canvas = document.getElementById("field");
+      var ctx = canvas.getContext("2d");
+      var W = 0, H = 0, DPR = 1;
+      var bgCanvas = document.createElement("canvas");
+
+      // ---------- audio (tiny synth, created on first interaction) ----------
+      var audioCtx = null, soundOn = true;
+      function ensureAudio() {
+        if (!audioCtx) {
+          try { audioCtx = new (window.AudioContext || window.webkitAudioContext)(); } catch (e) { audioCtx = null; }
+        }
+        if (audioCtx && audioCtx.state === "suspended") audioCtx.resume();
+      }
+      function blip(freqA, freqB, dur, type, gain) {
+        if (!soundOn || !audioCtx) return;
+        var t = audioCtx.currentTime;
+        var osc = audioCtx.createOscillator();
+        var g = audioCtx.createGain();
+        osc.type = type; osc.frequency.setValueAtTime(freqA, t);
+        osc.frequency.exponentialRampToValueAtTime(Math.max(30, freqB), t + dur);
+        g.gain.setValueAtTime(gain, t);
+        g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+        osc.connect(g); g.connect(audioCtx.destination);
+        osc.start(t); osc.stop(t + dur + 0.02);
+      }
+      function sndPlace() { blip(520, 340, 0.07, "square", 0.05); }
+      function sndAssimilate() {
+        blip(880, 110, 0.45, "sawtooth", 0.07);
+        setTimeout(function () { blip(196, 196, 0.3, "triangle", 0.09); }, 90);
+      }
+      function sndErase() { blip(220, 90, 0.1, "square", 0.05); }
+
+      // ---------- background deck plating ----------
+      function paintBackground() {
+        bgCanvas.width = Math.max(2, Math.floor(W * DPR));
+        bgCanvas.height = Math.max(2, Math.floor(H * DPR));
+        var b = bgCanvas.getContext("2d");
+        b.scale(DPR, DPR);
+        b.fillStyle = "#070b09";
+        b.fillRect(0, 0, W, H);
+        var tile = 72;
+        for (var y = 0; y < H; y += tile) {
+          for (var x = 0; x < W; x += tile) {
+            var shade = 8 + ((x * 7 + y * 13) % 9);
+            b.fillStyle = "rgb(" + shade + "," + (shade + 7) + "," + shade + ")";
+            b.fillRect(x + 1, y + 1, tile - 2, tile - 2);
+            b.strokeStyle = "rgba(90,140,80,0.16)";
+            b.lineWidth = 1;
+            b.strokeRect(x + 0.5, y + 0.5, tile - 1, tile - 1);
+            b.fillStyle = "rgba(140,220,120,0.14)";
+            [[x + 6, y + 6], [x + tile - 6, y + 6], [x + 6, y + tile - 6], [x + tile - 6, y + tile - 6]].forEach(function (p) {
+              b.beginPath(); b.arc(p[0], p[1], 1.6, 0, Math.PI * 2); b.fill();
+            });
+          }
+        }
+        // faint conduit runs
+        b.strokeStyle = "rgba(125,255,87,0.05)";
+        b.lineWidth = 7;
+        for (var i = 1; i <= 3; i++) {
+          b.beginPath(); b.moveTo(0, (H / 4) * i); b.lineTo(W, (H / 4) * i); b.stroke();
+        }
+        // vignette
+        var grad = b.createRadialGradient(W / 2, H / 2, Math.min(W, H) * 0.35, W / 2, H / 2, Math.max(W, H) * 0.75);
+        grad.addColorStop(0, "rgba(0,0,0,0)");
+        grad.addColorStop(1, "rgba(0,0,0,0.5)");
+        b.fillStyle = grad;
+        b.fillRect(0, 0, W, H);
+      }
+
+      function resize() {
+        var rect = canvas.getBoundingClientRect();
+        DPR = Math.min(2, window.devicePixelRatio || 1);
+        W = rect.width; H = rect.height;
+        canvas.width = Math.max(2, Math.floor(W * DPR));
+        canvas.height = Math.max(2, Math.floor(H * DPR));
+        ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
+        paintBackground();
+        clampAll();
+      }
+
+      // ---------- entities ----------
+      var drones = [], officers = [], particles = [], texts = [];
+      var assimilatedCount = 0;
+      var tool = "drone";
+      var paused = false;
+      var speedMult = 1;
+      var elapsed = 0;
+
+      var UNIFORMS = ["#e0483e", "#f2c14e", "#39c2b0"]; // command red, ops gold, science teal
+      var SKIN = ["#f2c9a0", "#c98d5e", "#8a5a34", "#e8b48c", "#6f4525"];
+
+      function rand(a, b) { return a + Math.random() * (b - a); }
+      function adaptation() { return 1 + Math.min(0.5, assimilatedCount * 0.03); }
+
+      function makeDrone(x, y) {
+        return {
+          x: x, y: y, r: 12,
+          phase: rand(0, Math.PI * 2),
+          sway: rand(0.7, 1.3),
+          target: null,
+          channeling: null
+        };
+      }
+      function makeOfficer(x, y) {
+        return {
+          x: x, y: y, r: 11,
+          resistance: 100,
+          heading: rand(0, Math.PI * 2),
+          wanderT: rand(0, 2),
+          lastContact: -99,
+          uniform: UNIFORMS[Math.floor(Math.random() * UNIFORMS.length)],
+          skin: SKIN[Math.floor(Math.random() * SKIN.length)],
+          vx: 0, vy: 0
+        };
+      }
+      function clampEntity(e) {
+        e.x = Math.max(e.r + 2, Math.min(W - e.r - 2, e.x));
+        e.y = Math.max(e.r + 2, Math.min(H - e.r - 2, e.y));
+      }
+      function clampAll() { drones.concat(officers).forEach(clampEntity); }
+
+      function spawnOfficers(n, scatter) {
+        for (var i = 0; i < n; i++) {
+          var x, y, tries = 0;
+          do {
+            x = rand(30, Math.max(60, W - 30));
+            y = rand(30, Math.max(60, H - 30));
+            tries++;
+          } while (scatter && tries < 12 && drones.some(function (d) {
+            var dx = d.x - x, dy = d.y - y; return dx * dx + dy * dy < 130 * 130;
+          }));
+          officers.push(makeOfficer(x, y));
+        }
+        updateBanner();
+      }
+
+      function reset() {
+        drones = []; officers = []; particles = []; texts = [];
+        assimilatedCount = 0; elapsed = 0;
+        drones.push(makeDrone(W * 0.22, H * 0.5));
+        spawnOfficers(4, true);
+        updateBanner();
+        updateStats();
+      }
+
+      // ---------- simulation ----------
+      var CONTACT = 27;          // centre distance that counts as arm's reach
+      var DRAIN = 24;            // resistance per second, per drone in contact
+      var REGEN = 7;             // resistance per second once clear
+      var DRONE_SPEED = 60;
+      var FLEE_SPEED = 53;
+      var WANDER_SPEED = 17;
+
+      function nearestOfficer(d) {
+        var best = null, bd = Infinity;
+        for (var i = 0; i < officers.length; i++) {
+          var o = officers[i], dx = o.x - d.x, dy = o.y - d.y, q = dx * dx + dy * dy;
+          if (q < bd) { bd = q; best = o; }
+        }
+        return best;
+      }
+
+      function step(dt) {
+        elapsed += dt;
+        var adapt = adaptation();
+
+        // officers decide & move first
+        for (var i = 0; i < officers.length; i++) {
+          var o = officers[i];
+          // nearest drone + threat vector
+          var threat = null, td = Infinity;
+          for (var j = 0; j < drones.length; j++) {
+            var d = drones[j], dx = o.x - d.x, dy = o.y - d.y, q = dx * dx + dy * dy;
+            if (q < td) { td = q; threat = d; }
+          }
+          td = Math.sqrt(td);
+          var mx = 0, my = 0, spd = 0;
+          if (threat && td < 150) {
+            // flee: directly away, pushed off walls
+            var fx = (o.x - threat.x) / (td || 1), fy = (o.y - threat.y) / (td || 1);
+            var wall = 46;
+            if (o.x < wall) fx += (wall - o.x) / wall * 1.4;
+            if (o.x > W - wall) fx -= (o.x - (W - wall)) / wall * 1.4;
+            if (o.y < wall) fy += (wall - o.y) / wall * 1.4;
+            if (o.y > H - wall) fy -= (o.y - (H - wall)) / wall * 1.4;
+            var fl = Math.hypot(fx, fy) || 1;
+            mx = fx / fl; my = fy / fl;
+            spd = FLEE_SPEED * (o.resistance < 40 ? 0.78 : 1); // weakening
+          } else {
+            o.wanderT -= dt;
+            if (o.wanderT <= 0) { o.heading = rand(0, Math.PI * 2); o.wanderT = rand(1.2, 3.2); }
+            // gentle wall steer while wandering
+            if (o.x < 30) o.heading = rand(-0.6, 0.6);
+            if (o.x > W - 30) o.heading = Math.PI + rand(-0.6, 0.6);
+            if (o.y < 30) o.heading = Math.PI / 2 + rand(-0.6, 0.6);
+            if (o.y > H - 30) o.heading = -Math.PI / 2 + rand(-0.6, 0.6);
+            mx = Math.cos(o.heading); my = Math.sin(o.heading);
+            spd = WANDER_SPEED;
+          }
+          o.x += mx * spd * dt;
+          o.y += my * spd * dt;
+          o.vx = mx * spd; o.vy = my * spd;
+          clampEntity(o);
+
+          // resistance recovery once clear of contact
+          if (elapsed - o.lastContact > 1.4 && o.resistance < 100) {
+            o.resistance = Math.min(100, o.resistance + REGEN * dt);
+          }
+        }
+
+        // drones hunt
+        for (var k = 0; k < drones.length; k++) {
+          var dr = drones[k];
+          dr.target = nearestOfficer(dr);
+          dr.channeling = null;
+          if (!dr.target) continue;
+          var t = dr.target;
+          var dx = t.x - dr.x, dy = t.y - dr.y;
+          var dist = Math.hypot(dx, dy) || 1;
+          if (dist <= CONTACT) {
+            dr.channeling = t;
+            t.resistance -= DRAIN * dt;
+            t.lastContact = elapsed;
+          } else {
+            // zombie shamble: speed pulses, path sways side to side
+            var gait = 0.72 + 0.28 * Math.sin(elapsed * 5.2 * dr.sway + dr.phase);
+            var sp = DRONE_SPEED * adapt * gait;
+            var ux = dx / dist, uy = dy / dist;
+            var swayAmt = Math.sin(elapsed * 2.1 * dr.sway + dr.phase) * 0.35;
+            var px = -uy * swayAmt, py = ux * swayAmt;
+            dr.x += (ux + px) * sp * dt;
+            dr.y += (uy + py) * sp * dt;
+            clampEntity(dr);
+          }
+        }
+
+        // conversions
+        for (var m = officers.length - 1; m >= 0; m--) {
+          var off = officers[m];
+          if (off.resistance <= 0) {
+            officers.splice(m, 1);
+            drones.push(makeDrone(off.x, off.y));
+            assimilatedCount++;
+            burst(off.x, off.y);
+            texts.push({ x: off.x, y: off.y - 20, life: 1.4, max: 1.4, str: "ASSIMILATED" });
+            sndAssimilate();
+          }
+        }
+
+        // particles & texts
+        for (var p = particles.length - 1; p >= 0; p--) {
+          var pt = particles[p];
+          pt.life -= dt;
+          pt.x += pt.vx * dt; pt.y += pt.vy * dt;
+          pt.vx *= 0.92; pt.vy *= 0.92;
+          if (pt.life <= 0) particles.splice(p, 1);
+        }
+        for (var s = texts.length - 1; s >= 0; s--) {
+          texts[s].life -= dt;
+          texts[s].y -= 22 * dt;
+          if (texts[s].life <= 0) texts.splice(s, 1);
+        }
+        updateBanner();
+      }
+
+      function burst(x, y) {
+        for (var i = 0; i < 26; i++) {
+          var a = rand(0, Math.PI * 2), v = rand(30, 130);
+          particles.push({ x: x, y: y, vx: Math.cos(a) * v, vy: Math.sin(a) * v, life: rand(0.35, 0.8), max: 0.8 });
+        }
+      }
+
+      // ---------- drawing ----------
+      function drawOfficer(o) {
+        // resistance ring
+        if (o.resistance < 100) {
+          ctx.beginPath();
+          ctx.arc(o.x, o.y, o.r + 6, -Math.PI / 2, -Math.PI / 2 + Math.PI * 2 * (o.resistance / 100));
+          ctx.strokeStyle = o.resistance > 45 ? "rgba(242,193,78,0.9)" : "rgba(255,90,78,0.95)";
+          ctx.lineWidth = 3;
+          ctx.stroke();
+        }
+        // body: uniform torso
+        ctx.beginPath();
+        ctx.arc(o.x, o.y, o.r, 0, Math.PI * 2);
+        ctx.fillStyle = o.uniform;
+        ctx.fill();
+        ctx.lineWidth = 1.5;
+        ctx.strokeStyle = "rgba(0,0,0,0.55)";
+        ctx.stroke();
+        // black shoulder yoke
+        ctx.beginPath();
+        ctx.arc(o.x, o.y - 3, o.r * 0.62, Math.PI, Math.PI * 2);
+        ctx.fillStyle = "#14181c";
+        ctx.fill();
+        // head
+        ctx.beginPath();
+        ctx.arc(o.x, o.y - 1, 4.6, 0, Math.PI * 2);
+        ctx.fillStyle = o.skin;
+        ctx.fill();
+        // commbadge glint
+        ctx.fillStyle = "#d7dee6";
+        ctx.fillRect(o.x + 3.4, o.y + 2.4, 2.4, 3);
+      }
+
+      function drawDrone(d) {
+        var bob = Math.sin(elapsed * 5.2 * d.sway + d.phase) * 0.8;
+        // channel beam
+        if (d.channeling) {
+          var t = d.channeling;
+          ctx.beginPath();
+          ctx.moveTo(d.x, d.y);
+          ctx.lineTo(t.x, t.y);
+          ctx.strokeStyle = "rgba(125,255,87,0.55)";
+          ctx.lineWidth = 2;
+          ctx.setLineDash([5, 4]);
+          ctx.lineDashOffset = -elapsed * 40;
+          ctx.stroke();
+          ctx.setLineDash([]);
+        }
+        ctx.save();
+        ctx.translate(d.x, d.y + bob * 0.3);
+        // aura
+        ctx.beginPath();
+        ctx.arc(0, 0, d.r + 5, 0, Math.PI * 2);
+        ctx.fillStyle = "rgba(125,255,87,0.07)";
+        ctx.fill();
+        // body: dark plating
+        ctx.beginPath();
+        ctx.arc(0, 0, d.r, 0, Math.PI * 2);
+        ctx.fillStyle = "#22282a";
+        ctx.fill();
+        ctx.lineWidth = 2;
+        ctx.strokeStyle = "#59c93e";
+        ctx.stroke();
+        // plating seams
+        ctx.strokeStyle = "rgba(160,255,140,0.35)";
+        ctx.lineWidth = 1;
+        ctx.beginPath(); ctx.arc(0, 0, d.r * 0.62, 0.4, 2.4); ctx.stroke();
+        ctx.beginPath(); ctx.moveTo(-d.r * 0.7, d.r * 0.45); ctx.lineTo(d.r * 0.5, d.r * 0.75); ctx.stroke();
+        // ocular implant: single glowing eye, aimed at target
+        var ex = 0, ey = -2;
+        if (d.target) {
+          var a = Math.atan2(d.target.y - d.y, d.target.x - d.x);
+          ex = Math.cos(a) * 3.4; ey = -2 + Math.sin(a) * 2.2;
+        }
+        ctx.beginPath();
+        ctx.arc(ex, ey, 3.1, 0, Math.PI * 2);
+        ctx.fillStyle = "#ff3b30";
+        ctx.shadowColor = "#ff3b30";
+        ctx.shadowBlur = 8;
+        ctx.fill();
+        ctx.shadowBlur = 0;
+        // laser pointer dot when hunting
+        if (d.target && !d.channeling) {
+          ctx.beginPath();
+          ctx.arc(d.target.x - d.x, d.target.y - d.y, 2, 0, Math.PI * 2);
+          ctx.fillStyle = "rgba(255,59,48,0.7)";
+          ctx.fill();
+        }
+        // green node lights
+        ctx.fillStyle = "#7dff57";
+        ctx.beginPath(); ctx.arc(-6, 5 + bob * 0.2, 1.6, 0, Math.PI * 2); ctx.fill();
+        ctx.beginPath(); ctx.arc(6.5, 6 - bob * 0.2, 1.3, 0, Math.PI * 2); ctx.fill();
+        ctx.restore();
+      }
+
+      function draw() {
+        ctx.clearRect(0, 0, W, H);
+        ctx.drawImage(bgCanvas, 0, 0, W, H);
+        var i;
+        for (i = 0; i < officers.length; i++) drawOfficer(officers[i]);
+        for (i = 0; i < drones.length; i++) drawDrone(drones[i]);
+        for (i = 0; i < particles.length; i++) {
+          var p = particles[i];
+          ctx.globalAlpha = Math.max(0, p.life / p.max);
+          ctx.beginPath();
+          ctx.arc(p.x, p.y, 2.4, 0, Math.PI * 2);
+          ctx.fillStyle = "#7dff57";
+          ctx.fill();
+        }
+        ctx.globalAlpha = 1;
+        ctx.font = "700 13px Orbitron, sans-serif";
+        ctx.textAlign = "center";
+        for (i = 0; i < texts.length; i++) {
+          var t = texts[i];
+          ctx.globalAlpha = Math.max(0, t.life / t.max);
+          ctx.fillStyle = "#7dff57";
+          ctx.fillText(t.str, t.x, t.y);
+        }
+        ctx.globalAlpha = 1;
+        if (!drones.length && !officers.length) {
+          ctx.font = "600 17px Rajdhani, sans-serif";
+          ctx.fillStyle = "rgba(230,242,223,0.75)";
+          ctx.fillText("The deck is empty. Deploy a drone, then beam down some officers.", W / 2, H / 2);
+        }
+      }
+
+      // ---------- HUD ----------
+      var elDrones = document.getElementById("st-drones");
+      var elOfficers = document.getElementById("st-officers");
+      var elAssim = document.getElementById("st-assimilated");
+      var elAdapt = document.getElementById("st-adapt");
+      var statT = 0;
+      function updateStats() {
+        elDrones.textContent = drones.length;
+        elOfficers.textContent = officers.length;
+        elAssim.textContent = assimilatedCount;
+        elAdapt.textContent = "+" + Math.round((adaptation() - 1) * 100) + "%";
+      }
+      var banner = document.getElementById("banner");
+      var bannerShown = false;
+      function updateBanner() {
+        var show = officers.length === 0 && assimilatedCount > 0;
+        if (show !== bannerShown) {
+          bannerShown = show;
+          banner.classList.toggle("show", show);
+          if (show) {
+            document.getElementById("banner-sub").textContent =
+              assimilatedCount + (assimilatedCount === 1 ? " officer has" : " officers have") +
+              " been added to the Collective. The deck belongs to the Borg.";
+          }
+        }
+      }
+
+      // ---------- main loop ----------
+      var last = performance.now();
+      function frame(now) {
+        var dt = Math.min(0.05, (now - last) / 1000);
+        last = now;
+        if (!paused) {
+          var steps = speedMult;
+          for (var i = 0; i < steps; i++) step(dt);
+        }
+        draw();
+        statT += dt;
+        if (statT > 0.12) { statT = 0; updateStats(); }
+        requestAnimationFrame(frame);
+      }
+
+      // ---------- input ----------
+      function canvasPos(evt) {
+        var rect = canvas.getBoundingClientRect();
+        return { x: evt.clientX - rect.left, y: evt.clientY - rect.top };
+      }
+      canvas.addEventListener("pointerdown", function (evt) {
+        ensureAudio();
+        var p = canvasPos(evt);
+        if (tool === "drone") {
+          drones.push(makeDrone(p.x, p.y)); sndPlace();
+        } else if (tool === "officer") {
+          officers.push(makeOfficer(p.x, p.y)); sndPlace();
+        } else {
+          // erase nearest within 34px
+          var best = null, bd = 34 * 34, list = null, idx = -1;
+          [["drones", drones], ["officers", officers]].forEach(function (pair) {
+            pair[1].forEach(function (e, i) {
+              var dx = e.x - p.x, dy = e.y - p.y, q = dx * dx + dy * dy;
+              if (q < bd) { bd = q; list = pair[1]; idx = i; }
+            });
+          });
+          if (list) { list.splice(idx, 1); sndErase(); }
+          updateBanner();
+        }
+        clampAll();
+        updateStats();
+      });
+
+      function setTool(name) {
+        tool = name;
+        ["drone", "officer", "erase"].forEach(function (n) {
+          document.getElementById("tool-" + n).setAttribute("aria-pressed", n === name ? "true" : "false");
+        });
+      }
+      document.getElementById("tool-drone").addEventListener("click", function () { setTool("drone"); });
+      document.getElementById("tool-officer").addEventListener("click", function () { setTool("officer"); });
+      document.getElementById("tool-erase").addEventListener("click", function () { setTool("erase"); });
+
+      document.getElementById("add-officers").addEventListener("click", function () { ensureAudio(); spawnOfficers(5, true); updateStats(); });
+      document.getElementById("add-drone").addEventListener("click", function () { ensureAudio(); drones.push(makeDrone(rand(30, W - 30), rand(30, H - 30))); updateStats(); });
+      document.getElementById("banner-btn").addEventListener("click", function () { ensureAudio(); spawnOfficers(5, true); updateStats(); });
+
+      var pauseBtn = document.getElementById("pause-btn");
+      pauseBtn.addEventListener("click", function () {
+        paused = !paused;
+        pauseBtn.textContent = paused ? "Resume" : "Pause";
+        pauseBtn.setAttribute("aria-pressed", paused ? "true" : "false");
+      });
+      var speedBtn = document.getElementById("speed-btn");
+      speedBtn.addEventListener("click", function () {
+        speedMult = speedMult >= 3 ? 1 : speedMult + 1;
+        speedBtn.textContent = "Speed: " + speedMult + "×";
+      });
+      var soundBtn = document.getElementById("sound-btn");
+      soundBtn.addEventListener("click", function () {
+        soundOn = !soundOn;
+        soundBtn.textContent = "Sound: " + (soundOn ? "On" : "Off");
+        soundBtn.setAttribute("aria-pressed", soundOn ? "true" : "false");
+        if (soundOn) ensureAudio();
+      });
+      document.getElementById("reset-btn").addEventListener("click", function () { reset(); });
+
+      window.addEventListener("resize", resize);
+      resize();
+      reset();
+      requestAnimationFrame(function (now) { last = now; requestAnimationFrame(frame); });
+    </script>
+  </body>
+</html>
