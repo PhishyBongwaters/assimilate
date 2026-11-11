@@ -38,7 +38,7 @@ Officers shoot back, with a different phaser per class:
 
 Each phaser sits on one of four frequencies. After 3 landed hits on one frequency the Borg adapt — the shield bubble flares, an "ADAPTED" tag appears, and that frequency is neutralised until the officer remodulates (~6 s). Only **Captains** (four pips, gold ring) carry the adaptive phaser, which rotates frequency every shot so it can never be adapted to. Captain shots do not count toward adaptation.
 
-Drones have 120 HP with a health bar; destroyed drones are counted, and losing all drones shows "The Collective has been destroyed".
+Drones have 260 HP with a health bar; destroyed drones are counted, and losing all drones shows "The Collective has been destroyed". Bulkhead clicks refuse placement with a "BULKHEAD" tag — units can never be placed inside a wall.
 
 ## Controls
 

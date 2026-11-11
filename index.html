@@ -334,7 +334,7 @@
           <li><b>The Collective adapts.</b> Each assimilation makes every drone a little faster. It does not go back down.</li>
           <li><b>Resistance hits zero → drone.</b> The officer joins the Collective and immediately starts hunting its former crewmates.</li>
           <li><b>Every class carries a different phaser.</b> Command (red) hauls a <b>Type III rifle</b> — heavy hits, slow fire. Operations (gold) carries the balanced <b>Type II</b>. Science (teal) gets the <b>Type I</b> — weak, but it fires fast.</li>
-          <li><b>Drones can die now.</b> Phaser fire burns through a drone's hull — a health bar appears over damaged drones. Lose every drone and the deck belongs to Starfleet.</li>
+          <li><b>Drones can die — but they're armoured.</b> A drone's hull soaks up sustained phaser fire before it goes down, and a drone is faster than a fleeing officer, so a lone drone can run its target down. A health bar appears over damaged drones. Lose every drone and the deck belongs to Starfleet.</li>
           <li><b>Borg shields adapt to frequency.</b> Each officer's phaser sits on one of four frequencies (the coloured dot). Just <b>3 hits</b> on the same frequency and the Collective adapts: a bright green shield bubble appears with an ADAPTED tag, and that frequency is neutralised completely — shots just splash off. Watch the four dots in the status panel fill toward adaptation.</li>
           <li><b>Officers remodulate.</b> Once their frequency is adapted to, an officer needs about <b>6 seconds</b> to find a new one — that's your window to close in.</li>
           <li><b>Only Captains get the adaptive phaser.</b> Four pips and a gold ring. It changes frequency with every single shot, so the Borg can never adapt to it — a Captain is the most dangerous officer on the deck.</li>
@@ -455,6 +455,17 @@
           var cy = Math.max(wl.y, Math.min(y, wl.y + wl.h));
           var dx = x - cx, dy = y - cy;
           if (dx * dx + dy * dy < r * r) return true;
+        }
+        return false;
+      }
+      // true when the point itself lands on a bulkhead (optionally padded) —
+      // a click there is a click ON a wall, not near one, and must be refused
+      // outright rather than nudged to the nearest free spot.
+      function pointHitsWall(x, y, pad) {
+        for (var i = 0; i < walls.length; i++) {
+          var wl = walls[i];
+          if (x >= wl.x - pad && x <= wl.x + wl.w + pad &&
+              y >= wl.y - pad && y <= wl.y + wl.h + pad) return true;
         }
         return false;
       }
@@ -742,9 +753,9 @@
       var adaptedFreq = [false, false, false, false];
       // one phaser per class — index matches UNIFORMS / CLASSES below
       var PHASERS = {
-        command: { name: "Type III rifle", dmg: 34, cd: 1.45, range: 215, width: 3.6, color: "#ff8a4a" },
-        ops:     { name: "Type II phaser", dmg: 20, cd: 0.9,  range: 190, width: 2.6, color: "#ffd34d" },
-        science: { name: "Type I phaser",  dmg: 11, cd: 0.5,  range: 168, width: 1.8, color: "#7fe7ff" }
+        command: { name: "Type III rifle", dmg: 26, cd: 1.55, range: 215, width: 3.6, color: "#ff8a4a" },
+        ops:     { name: "Type II phaser", dmg: 16, cd: 0.95, range: 190, width: 2.6, color: "#ffd34d" },
+        science: { name: "Type I phaser",  dmg: 9,  cd: 0.55, range: 168, width: 1.8, color: "#7fe7ff" }
       };
       var CLASSES = ["command", "ops", "science"];
       var RANKS = [
@@ -780,7 +791,7 @@
       function makeDrone(x, y) {
         return {
           x: x, y: y, r: 12,
-          hp: 120, maxHp: 120,
+          hp: 260, maxHp: 260,
           shieldFlash: 0, hitFlash: 0,
           phase: rand(0, Math.PI * 2),
           sway: rand(0.7, 1.3),
@@ -853,10 +864,10 @@
       }
 
       // ---------- simulation ----------
-      var CONTACT = 27;          // centre distance that counts as arm's reach
-      var DRAIN = 24;            // resistance per second, per drone in contact
-      var REGEN = 7;             // resistance per second once clear
-      var DRONE_SPEED = 60;
+      var CONTACT = 30;          // centre distance that counts as arm's reach
+      var DRAIN = 36;            // resistance per second, per drone in contact
+      var REGEN = 5;             // resistance per second once clear
+      var DRONE_SPEED = 76;
       var FLEE_SPEED = 53;
       var WANDER_SPEED = 17;
 
@@ -1027,7 +1038,7 @@
             var mdx = mtX - dr.x, mdy = mtY - dr.y;
             var mDist = Math.hypot(mdx, mdy) || 1;
             if (mDist > 4) {
-              var gait = 0.72 + 0.28 * Math.sin(elapsed * 5.2 * dr.sway + dr.phase);
+              var gait = 0.85 + 0.15 * Math.sin(elapsed * 5.2 * dr.sway + dr.phase);
               var sp = DRONE_SPEED * adapt * gait;
               var ux = mdx / mDist, uy = mdy / mDist;
               var swayAmt = Math.sin(elapsed * 2.1 * dr.sway + dr.phase) * (viaDoor ? 0.08 : 0.35);
@@ -1417,7 +1428,10 @@
       canvas.addEventListener("pointerdown", function (evt) {
         ensureAudio();
         var p = canvasPos(evt);
-        var spot = (tool === "erase") ? null : findFreeSpot(p.x, p.y);
+        // Clicking a bulkhead itself refuses placement — never snap a wall
+        // click to a nearby free spot, or drones end up dropped in the wall.
+        var onWall = (tool === "drone" || tool === "officer") && pointHitsWall(p.x, p.y, 2);
+        var spot = (tool === "erase" || onWall) ? null : findFreeSpot(p.x, p.y);
         if ((tool === "drone" || tool === "officer") && !spot) {
           texts.push({ x: p.x, y: Math.max(16, p.y - 14), life: 1, max: 1, str: "BULKHEAD" });
           sndErase();
