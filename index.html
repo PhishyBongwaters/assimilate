@@ -140,7 +140,7 @@
       /* ---------- stats ---------- */
       .stats {
         display: grid;
-        grid-template-columns: repeat(4, 1fr);
+        grid-template-columns: repeat(3, 1fr);
         gap: 10px;
       }
       @media (max-width: 560px) {
@@ -167,10 +167,31 @@
       }
       .stat.drones .num { color: var(--accent); }
       .stat.officers .num { color: var(--gold); }
+      .stat.shield .num { color: var(--teal); }
+      .stat.lost .num { color: var(--danger); }
+      .freq-dots { display: flex; gap: 10px; align-items: flex-start; margin: 5px 0 3px; min-height: 26px; }
+      .freq-unit { display: flex; flex-direction: column; align-items: center; gap: 3px; }
+      .freq-dot { width: 15px; height: 15px; border-radius: 50%; border: 2px solid; background: transparent; box-sizing: border-box; transition: background 0.15s, box-shadow 0.15s; }
+      .freq-dot.adapted { box-shadow: 0 0 0 2px rgba(125,255,87,0.25), 0 0 10px currentColor; }
+      .freq-pips { display: flex; gap: 2px; }
+      .freq-pip { width: 7px; height: 4px; border-radius: 2px; background: var(--line); }
+      .freq-pip.on { background: var(--ink); }
       @media (prefers-color-scheme: light) {
         .stat.drones .num { color: #2e7d16; }
         .stat.officers .num { color: #9a7414; }
       }
+
+      .deckbar {
+        display: flex; flex-wrap: wrap; gap: 4px 14px; align-items: baseline;
+        background: var(--panel); border: 1px solid var(--line); border-radius: 10px;
+        padding: 8px 12px;
+      }
+      .deckbar .deck-name {
+        font-family: "Orbitron", sans-serif; font-size: 12px; letter-spacing: 0.16em;
+        text-transform: uppercase; color: var(--accent); white-space: nowrap;
+      }
+      .deckbar .deck-rooms { color: var(--ink-dim); font-size: 14.5px; font-weight: 500; }
+      .deckbar .deck-rooms b { color: var(--ink); }
 
       /* ---------- playfield ---------- */
       .field-shell {
@@ -249,7 +270,7 @@
     <div class="wrap">
       <header class="top">
         <h1>Assimi<span class="borg">late</span></h1>
-        <p class="tagline">We are the Borg. <em>Resistance is futile</em> — but it does take a moment.</p>
+        <p class="tagline">The Borg have beamed aboard a Starfleet vessel. <em>Resistance is futile</em> — but the crew has bulkheads, phasers, and somewhere to run.</p>
       </header>
 
       <section class="deck" aria-label="Game controls">
@@ -277,13 +298,20 @@
         <div class="stat drones"><div class="num" id="st-drones">0</div><div class="cap">Drones</div></div>
         <div class="stat officers"><div class="num" id="st-officers">0</div><div class="cap">Officers left</div></div>
         <div class="stat"><div class="num" id="st-assimilated">0</div><div class="cap">Assimilated</div></div>
-        <div class="stat"><div class="num" id="st-adapt">+0%</div><div class="cap">Adaptation</div></div>
+        <div class="stat"><div class="num" id="st-adapt">+0%</div><div class="cap">Adaptation (speed)</div></div>
+        <div class="stat lost"><div class="num" id="st-lost">0</div><div class="cap">Drones lost</div></div>
+        <div class="stat shield"><div class="num" id="st-shield">0/4</div><div class="freq-dots" id="freq-dots" aria-label="Shield adaptation progress by frequency"></div><div class="cap">Frequencies adapted — dots fill in 3 hits</div></div>
       </section>
+
+      <div class="deckbar">
+        <span class="deck-name">Deck 7 &middot; Starboard Section</span>
+        <span class="deck-rooms"><b>Transporter Room</b> (beam-in point) &middot; Bridge &middot; Science Lab &middot; Cargo Bay &middot; <b>Engineering</b> &middot; Sickbay &mdash; linked by a central corridor. Bulkheads block movement and phaser fire; doorways don&rsquo;t.</span>
+      </div>
 
       <div class="field-shell">
         <canvas id="field" aria-label="Playfield. Tap or click to place the selected unit."></canvas>
         <div class="banner" id="banner">
-          <p class="big">Resistance was futile</p>
+          <p class="big" id="banner-big">Resistance was futile</p>
           <p id="banner-sub">Every officer on the deck has been added to the Collective.</p>
           <button class="primary" id="banner-btn">Beam down 5 more officers</button>
         </div>
@@ -292,10 +320,12 @@
       <div class="hintbar">
         <span><b>Click / tap the deck</b> to place the selected unit.</span>
         <span><b>Drones hunt on their own</b> — you command the Collective by placement, not by orders.</span>
+        <span><b>Officers shoot back</b> — and the Borg adapt to any frequency fired at them too often.</span>
+        <span><b>Bulkheads block everything</b> — movement and phaser fire. Drones path through doorways; officers flee room to room.</span>
       </div>
 
       <section class="howto">
-        <h2>How assimilation works</h2>
+        <h2>How it works</h2>
         <ul>
           <li><b>Drones are basically zombies.</b> They shamble toward the nearest officer, always. Slow, stupid, inevitable.</li>
           <li><b>Contact starts the process.</b> A drone in arm's reach injects its tubules and drains the officer's <b>Resistance</b> — watch the ring around the officer empty.</li>
@@ -303,6 +333,14 @@
           <li><b>Swarm to speed it up.</b> Every extra drone in contact drains Resistance faster. Surround your target.</li>
           <li><b>The Collective adapts.</b> Each assimilation makes every drone a little faster. It does not go back down.</li>
           <li><b>Resistance hits zero → drone.</b> The officer joins the Collective and immediately starts hunting its former crewmates.</li>
+          <li><b>Every class carries a different phaser.</b> Command (red) hauls a <b>Type III rifle</b> — heavy hits, slow fire. Operations (gold) carries the balanced <b>Type II</b>. Science (teal) gets the <b>Type I</b> — weak, but it fires fast.</li>
+          <li><b>Drones can die now.</b> Phaser fire burns through a drone's hull — a health bar appears over damaged drones. Lose every drone and the deck belongs to Starfleet.</li>
+          <li><b>Borg shields adapt to frequency.</b> Each officer's phaser sits on one of four frequencies (the coloured dot). Just <b>3 hits</b> on the same frequency and the Collective adapts: a bright green shield bubble appears with an ADAPTED tag, and that frequency is neutralised completely — shots just splash off. Watch the four dots in the status panel fill toward adaptation.</li>
+          <li><b>Officers remodulate.</b> Once their frequency is adapted to, an officer needs about <b>6 seconds</b> to find a new one — that's your window to close in.</li>
+          <li><b>Only Captains get the adaptive phaser.</b> Four pips and a gold ring. It changes frequency with every single shot, so the Borg can never adapt to it — a Captain is the most dangerous officer on the deck.</li>
+          <li><b>This is a starship now.</b> The Borg beam in through the <b>Transporter Room</b> (top left). The deck is six rooms — Bridge, Science Lab, Cargo Bay, Engineering with its glowing warp core, and Sickbay — linked by a central corridor and side doorways.</li>
+          <li><b>Bulkheads are real walls.</b> Nothing walks or shoots through them — phaser beams stop at the wall, so an officer behind a bulkhead is safe until a drone comes through a door. Drones navigate doorway to doorway on their own.</li>
+          <li><b>Rooms change the hunt.</b> Officers flee through doors into other rooms, and a drone swarm has to funnel through the doorway to follow — but corner a crew member in a room and there are only two doors out.</li>
         </ul>
       </section>
 
@@ -342,8 +380,171 @@
         setTimeout(function () { blip(196, 196, 0.3, "triangle", 0.09); }, 90);
       }
       function sndErase() { blip(220, 90, 0.1, "square", 0.05); }
+      function sndPhaser() { blip(1600, 280, 0.11, "sawtooth", 0.014); }
+      function sndAdapt() { blip(130, 430, 0.5, "triangle", 0.07); }
+      function sndDroneDown() { blip(320, 38, 0.38, "square", 0.06); }
 
-      // ---------- background deck plating ----------
+      // ---------- the ship: rooms, bulkheads, doorways ----------
+      var WALL_T = 12;
+      var walls = [];
+      var navNodes = [];
+      var navEdges = [];
+      var ROOMS = [
+        { id: "transporter", name: "TRANSPORTER ROOM", x1: 0,    y1: 0,    x2: 0.33, y2: 0.44, tint: "rgba(57,194,176,0.08)" },
+        { id: "bridge",      name: "BRIDGE",           x1: 0.33, y1: 0,    x2: 0.67, y2: 0.44, tint: "rgba(242,193,78,0.06)" },
+        { id: "science",     name: "SCIENCE LAB",      x1: 0.67, y1: 0,    x2: 1,    y2: 0.44, tint: "rgba(127,231,255,0.06)" },
+        { id: "cargo",       name: "CARGO BAY",        x1: 0,    y1: 0.56, x2: 0.33, y2: 1,    tint: "rgba(255,179,64,0.05)" },
+        { id: "engineering", name: "ENGINEERING",      x1: 0.33, y1: 0.56, x2: 0.67, y2: 1,    tint: "rgba(255,138,74,0.07)" },
+        { id: "sickbay",     name: "SICKBAY",          x1: 0.67, y1: 0.56, x2: 1,    y2: 1,    tint: "rgba(170,215,255,0.06)" }
+      ];
+      var DOORS = [
+        { x: 0.165, y: 0.44, axis: "h" }, { x: 0.5, y: 0.44, axis: "h" }, { x: 0.835, y: 0.44, axis: "h" },
+        { x: 0.165, y: 0.56, axis: "h" }, { x: 0.5, y: 0.56, axis: "h" }, { x: 0.835, y: 0.56, axis: "h" },
+        { x: 0.33, y: 0.225, axis: "v" }, { x: 0.67, y: 0.225, axis: "v" },
+        { x: 0.33, y: 0.775, axis: "v" }, { x: 0.67, y: 0.775, axis: "v" }
+      ];
+      var NODE_FRACS = [
+        [0.165, 0.22], [0.5, 0.22], [0.835, 0.22],
+        [0.165, 0.78], [0.5, 0.78], [0.835, 0.78],
+        [0.165, 0.5], [0.5, 0.5], [0.835, 0.5],
+        [0.165, 0.44], [0.5, 0.44], [0.835, 0.44],
+        [0.165, 0.56], [0.5, 0.56], [0.835, 0.56],
+        [0.33, 0.225], [0.67, 0.225], [0.33, 0.775], [0.67, 0.775]
+      ];
+      function roomCenter(room) {
+        return { x: (room.x1 + room.x2) / 2 * W, y: (room.y1 + room.y2) / 2 * H };
+      }
+      function buildLevel() {
+        walls = [];
+        function hWall(yf, x1, x2) { walls.push({ x: x1 * W, y: yf * H - WALL_T / 2, w: (x2 - x1) * W, h: WALL_T }); }
+        function vWall(xf, y1, y2) { walls.push({ x: xf * W - WALL_T / 2, y: y1 * H, w: WALL_T, h: (y2 - y1) * H }); }
+        [0.44, 0.56].forEach(function (yf) {
+          hWall(yf, 0, 0.13); hWall(yf, 0.20, 0.465); hWall(yf, 0.535, 0.80); hWall(yf, 0.87, 1);
+        });
+        vWall(0.33, 0, 0.18); vWall(0.33, 0.27, 0.44);
+        vWall(0.67, 0, 0.18); vWall(0.67, 0.27, 0.44);
+        vWall(0.33, 0.56, 0.73); vWall(0.33, 0.82, 1);
+        vWall(0.67, 0.56, 0.73); vWall(0.67, 0.82, 1);
+        buildNav();
+      }
+      // segment vs rect (rect optionally inflated by pad)
+      function segSeg(x1, y1, x2, y2, x3, y3, x4, y4) {
+        function cross(ax, ay, bx, by, cx, cy) { return (bx - ax) * (cy - ay) - (by - ay) * (cx - ax); }
+        var d1 = cross(x3, y3, x4, y4, x1, y1), d2 = cross(x3, y3, x4, y4, x2, y2);
+        var d3 = cross(x1, y1, x2, y2, x3, y3), d4 = cross(x1, y1, x2, y2, x4, y4);
+        return ((d1 > 0) !== (d2 > 0)) && ((d3 > 0) !== (d4 > 0));
+      }
+      function segHitsRect(x1, y1, x2, y2, r, pad) {
+        var rx = r.x - pad, ry = r.y - pad, rw = r.w + pad * 2, rh = r.h + pad * 2;
+        if (x1 >= rx && x1 <= rx + rw && y1 >= ry && y1 <= ry + rh) return true;
+        if (x2 >= rx && x2 <= rx + rw && y2 >= ry && y2 <= ry + rh) return true;
+        return segSeg(x1, y1, x2, y2, rx, ry, rx + rw, ry) ||
+               segSeg(x1, y1, x2, y2, rx + rw, ry, rx + rw, ry + rh) ||
+               segSeg(x1, y1, x2, y2, rx + rw, ry + rh, rx, ry + rh) ||
+               segSeg(x1, y1, x2, y2, rx, ry + rh, rx, ry);
+      }
+      function lineBlockedPad(x1, y1, x2, y2, pad) {
+        for (var i = 0; i < walls.length; i++) if (segHitsRect(x1, y1, x2, y2, walls[i], pad)) return true;
+        return false;
+      }
+      function lineBlocked(x1, y1, x2, y2) { return lineBlockedPad(x1, y1, x2, y2, 0); }
+      function circleHitsWall(x, y, r) {
+        for (var i = 0; i < walls.length; i++) {
+          var wl = walls[i];
+          var cx = Math.max(wl.x, Math.min(x, wl.x + wl.w));
+          var cy = Math.max(wl.y, Math.min(y, wl.y + wl.h));
+          var dx = x - cx, dy = y - cy;
+          if (dx * dx + dy * dy < r * r) return true;
+        }
+        return false;
+      }
+      function isFree(x, y, r) {
+        return x > r && x < W - r && y > r && y < H - r && !circleHitsWall(x, y, r);
+      }
+      function findFreeSpot(x, y) {
+        if (isFree(x, y, 13)) return { x: x, y: y };
+        for (var rad = 10; rad <= 56; rad += 8) {
+          for (var a = 0; a < Math.PI * 2; a += Math.PI / 6) {
+            var nx = x + Math.cos(a) * rad, ny = y + Math.sin(a) * rad;
+            if (isFree(nx, ny, 13)) return { x: nx, y: ny };
+          }
+        }
+        return null;
+      }
+      function resolveWalls(e) {
+        for (var iter = 0; iter < 2; iter++) {
+          for (var i = 0; i < walls.length; i++) {
+            var wl = walls[i];
+            var cx = Math.max(wl.x, Math.min(e.x, wl.x + wl.w));
+            var cy = Math.max(wl.y, Math.min(e.y, wl.y + wl.h));
+            var dx = e.x - cx, dy = e.y - cy;
+            var d2 = dx * dx + dy * dy;
+            if (d2 >= e.r * e.r) continue;
+            if (d2 > 0.0001) {
+              var d = Math.sqrt(d2), push = e.r - d;
+              e.x += (dx / d) * push; e.y += (dy / d) * push;
+            } else {
+              // centre inside the wall: exit by the nearest face
+              var left = e.x - wl.x, right = wl.x + wl.w - e.x;
+              var top = e.y - wl.y, bottom = wl.y + wl.h - e.y;
+              var m = Math.min(left, right, top, bottom);
+              if (m === left) e.x = wl.x - e.r; else if (m === right) e.x = wl.x + wl.w + e.r;
+              else if (m === top) e.y = wl.y - e.r; else e.y = wl.y + wl.h + e.r;
+            }
+          }
+        }
+      }
+      function buildNav() {
+        navNodes = NODE_FRACS.map(function (f) { return { x: f[0] * W, y: f[1] * H }; });
+        navEdges = navNodes.map(function () { return []; });
+        for (var i = 0; i < navNodes.length; i++) {
+          for (var j = i + 1; j < navNodes.length; j++) {
+            if (!lineBlockedPad(navNodes[i].x, navNodes[i].y, navNodes[j].x, navNodes[j].y, 5)) {
+              navEdges[i].push(j); navEdges[j].push(i);
+            }
+          }
+        }
+      }
+      // BFS through doorways: returns the next waypoint toward (tx,ty), or null if the way is clear
+      function findWaypoint(fx, fy, tx, ty) {
+        if (!navNodes.length || !lineBlocked(fx, fy, tx, ty)) return null;
+        var n = navNodes.length, i;
+        var isStart = {}, isGoal = {}, prev = {}, seen = {}, queue = [];
+        for (i = 0; i < n; i++) {
+          if (!lineBlockedPad(fx, fy, navNodes[i].x, navNodes[i].y, 5)) { isStart[i] = true; queue.push(i); seen[i] = true; prev[i] = -1; }
+          if (!lineBlockedPad(tx, ty, navNodes[i].x, navNodes[i].y, 5)) isGoal[i] = true;
+        }
+        if (!queue.length) return null;
+        var found = -1;
+        while (queue.length) {
+          var cur = queue.shift();
+          if (isGoal[cur]) { found = cur; break; }
+          for (var k = 0; k < navEdges[cur].length; k++) {
+            var nb = navEdges[cur][k];
+            if (!seen[nb]) { seen[nb] = true; prev[nb] = cur; queue.push(nb); }
+          }
+        }
+        if (found === -1) {
+          // no full route (should not happen on this deck): head for the nearest visible node
+          var best = null, bd = Infinity;
+          for (i = 0; i < n; i++) if (isStart[i]) {
+            var ddx = navNodes[i].x - tx, ddy = navNodes[i].y - ty, q = ddx * ddx + ddy * ddy;
+            if (q < bd) { bd = q; best = navNodes[i]; }
+          }
+          return best;
+        }
+        var path = [], node = found;
+        while (node !== -1) { path.unshift(node); node = prev[node]; }
+        for (i = 0; i < path.length; i++) {
+          var nd = navNodes[path[i]];
+          var wx = nd.x - fx, wy = nd.y - fy;
+          if (wx * wx + wy * wy > 14 * 14) return { x: nd.x, y: nd.y };
+        }
+        var last = navNodes[path[path.length - 1]];
+        return { x: last.x, y: last.y };
+      }
+
+      // ---------- background: deck plan of the ship ----------
       function paintBackground() {
         bgCanvas.width = Math.max(2, Math.floor(W * DPR));
         bgCanvas.height = Math.max(2, Math.floor(H * DPR));
@@ -351,33 +552,168 @@
         b.scale(DPR, DPR);
         b.fillStyle = "#070b09";
         b.fillRect(0, 0, W, H);
-        var tile = 72;
-        for (var y = 0; y < H; y += tile) {
-          for (var x = 0; x < W; x += tile) {
-            var shade = 8 + ((x * 7 + y * 13) % 9);
-            b.fillStyle = "rgb(" + shade + "," + (shade + 7) + "," + shade + ")";
-            b.fillRect(x + 1, y + 1, tile - 2, tile - 2);
-            b.strokeStyle = "rgba(90,140,80,0.16)";
-            b.lineWidth = 1;
-            b.strokeRect(x + 0.5, y + 0.5, tile - 1, tile - 1);
-            b.fillStyle = "rgba(140,220,120,0.14)";
-            [[x + 6, y + 6], [x + tile - 6, y + 6], [x + 6, y + tile - 6], [x + tile - 6, y + tile - 6]].forEach(function (p) {
-              b.beginPath(); b.arc(p[0], p[1], 1.6, 0, Math.PI * 2); b.fill();
-            });
+        // room floor tints
+        ROOMS.forEach(function (rm) {
+          b.fillStyle = rm.tint;
+          b.fillRect(rm.x1 * W, rm.y1 * H, (rm.x2 - rm.x1) * W, (rm.y2 - rm.y1) * H);
+        });
+        // corridor band
+        b.fillStyle = "rgba(225,240,255,0.05)";
+        b.fillRect(0, 0.44 * H, W, 0.12 * H);
+        b.strokeStyle = "rgba(160,210,255,0.20)";
+        b.lineWidth = 1;
+        b.setLineDash([10, 8]);
+        b.beginPath(); b.moveTo(6, 0.5 * H); b.lineTo(W - 6, 0.5 * H); b.stroke();
+        b.setLineDash([]);
+        // deck plating grid
+        b.strokeStyle = "rgba(140,190,130,0.055)";
+        b.lineWidth = 1;
+        for (var gx = 36; gx < W; gx += 36) { b.beginPath(); b.moveTo(gx, 0); b.lineTo(gx, H); b.stroke(); }
+        for (var gy = 36; gy < H; gy += 36) { b.beginPath(); b.moveTo(0, gy); b.lineTo(W, gy); b.stroke(); }
+
+        function label(rm, sub) {
+          b.font = "700 " + Math.max(9, Math.min(12, W * 0.012)) + "px Orbitron, sans-serif";
+          b.textAlign = "left";
+          b.fillStyle = "rgba(230,242,223,0.52)";
+          b.fillText(rm.name, rm.x1 * W + 10, rm.y1 * H + 18);
+          b.font = "600 " + Math.max(8, Math.min(10.5, W * 0.0105)) + "px Rajdhani, sans-serif";
+          b.fillStyle = "rgba(200,225,190,0.34)";
+          b.fillText(sub, rm.x1 * W + 10, rm.y1 * H + 32);
+        }
+        label(ROOMS[0], "Borg beam-in point");
+        label(ROOMS[1], "Command centre");
+        label(ROOMS[2], "Research & scanners");
+        label(ROOMS[3], "Stores & equipment");
+        label(ROOMS[4], "Warp core below the grate");
+        label(ROOMS[5], "Biobeds & treatment");
+
+        // --- props ---
+        // Transporter pads (top-left)
+        [[0.10, 0.21], [0.165, 0.28], [0.23, 0.21]].forEach(function (pf) {
+          b.beginPath(); b.arc(pf[0] * W, pf[1] * H, Math.max(11, W * 0.014), 0, Math.PI * 2);
+          b.fillStyle = "rgba(127,231,255,0.10)"; b.fill();
+          b.strokeStyle = "rgba(127,231,255,0.55)"; b.lineWidth = 1.6; b.stroke();
+          b.beginPath(); b.arc(pf[0] * W, pf[1] * H, Math.max(5, W * 0.006), 0, Math.PI * 2);
+          b.strokeStyle = "rgba(127,231,255,0.35)"; b.stroke();
+        });
+        // Bridge viewscreen (top-centre, along the top hull)
+        b.fillStyle = "#0a2c4e";
+        b.fillRect(0.40 * W, 0.028 * H, 0.20 * W, 0.085 * H);
+        b.strokeStyle = "rgba(127,231,255,0.7)"; b.lineWidth = 1.6;
+        b.strokeRect(0.40 * W, 0.028 * H, 0.20 * W, 0.085 * H);
+        b.fillStyle = "rgba(255,255,255,0.75)";
+        [[0.43, 0.05], [0.47, 0.085], [0.52, 0.055], [0.56, 0.09], [0.585, 0.045], [0.50, 0.04]].forEach(function (st) {
+          b.fillRect(st[0] * W, st[1] * H, 1.6, 1.6);
+        });
+        // Bridge consoles
+        [[0.44, 0.33], [0.56, 0.33]].forEach(function (cf) {
+          b.beginPath(); b.arc(cf[0] * W, cf[1] * H, Math.max(9, W * 0.011), 0, Math.PI * 2);
+          b.fillStyle = "rgba(242,193,78,0.13)"; b.fill();
+          b.strokeStyle = "rgba(242,193,78,0.45)"; b.lineWidth = 1.2; b.stroke();
+        });
+        // Science lab specimen tanks (top-right)
+        for (var ti = 0; ti < 3; ti++) {
+          var tx = (0.90 + ti * 0.028) * W, ty = 0.16 * H;
+          b.fillStyle = "rgba(125,255,87,0.10)";
+          b.fillRect(tx, ty, W * 0.02, H * 0.16);
+          b.strokeStyle = "rgba(125,255,87,0.4)"; b.lineWidth = 1;
+          b.strokeRect(tx, ty, W * 0.02, H * 0.16);
+        }
+        // Cargo crates (bottom-left)
+        [[0.05, 0.80, 0.055, 0.10], [0.115, 0.80, 0.045, 0.08], [0.05, 0.665, 0.04, 0.07], [0.24, 0.86, 0.05, 0.09]].forEach(function (cr) {
+          b.fillStyle = "rgba(255,179,64,0.10)";
+          b.fillRect(cr[0] * W, cr[1] * H, cr[2] * W, cr[3] * H);
+          b.strokeStyle = "rgba(255,179,64,0.45)"; b.lineWidth = 1.2;
+          b.strokeRect(cr[0] * W, cr[1] * H, cr[2] * W, cr[3] * H);
+        });
+        // Engineering: warp core housing ring (bottom-centre)
+        b.beginPath(); b.arc(0.5 * W, 0.78 * H, Math.max(24, W * 0.030), 0, Math.PI * 2);
+        b.strokeStyle = "rgba(127,231,255,0.5)"; b.lineWidth = 3; b.stroke();
+        b.beginPath(); b.arc(0.5 * W, 0.78 * H, Math.max(17, W * 0.021), 0, Math.PI * 2);
+        b.strokeStyle = "rgba(127,231,255,0.28)"; b.lineWidth = 1.5; b.stroke();
+        // Sickbay biobeds (bottom-right)
+        for (var bi = 0; bi < 3; bi++) {
+          var bx = 0.72 * W, by = (0.66 + bi * 0.11) * H;
+          b.fillStyle = "rgba(200,230,255,0.13)";
+          b.fillRect(bx, by, W * 0.20, H * 0.065);
+          b.strokeStyle = "rgba(200,230,255,0.45)"; b.lineWidth = 1;
+          b.strokeRect(bx, by, W * 0.20, H * 0.065);
+          b.fillStyle = "rgba(200,230,255,0.30)";
+          b.fillRect(bx + 3, by + 3, W * 0.035, H * 0.065 - 6);
+        }
+        // --- bulkheads ---
+        var lcars = ["#f2a65a", "#7fe7ff", "#c792ff", "#f2c14e"];
+        walls.forEach(function (wl, wi) {
+          b.fillStyle = "#2c383e";
+          b.fillRect(wl.x, wl.y, wl.w, wl.h);
+          b.fillStyle = "#48565e";
+          if (wl.w >= wl.h) b.fillRect(wl.x, wl.y, wl.w, 2); else b.fillRect(wl.x, wl.y, 2, wl.h);
+          b.fillStyle = "rgba(0,0,0,0.35)";
+          if (wl.w >= wl.h) b.fillRect(wl.x, wl.y + wl.h - 2, wl.w, 2); else b.fillRect(wl.x + wl.w - 2, wl.y, 2, wl.h);
+          // LCARS accent block on longer walls
+          if (Math.max(wl.w, wl.h) > 90) {
+            b.fillStyle = lcars[wi % lcars.length];
+            b.globalAlpha = 0.75;
+            if (wl.w >= wl.h) b.fillRect(wl.x + wl.w * 0.42, wl.y + 4, Math.min(26, wl.w * 0.16), 4);
+            else b.fillRect(wl.x + 4, wl.y + wl.h * 0.42, 4, Math.min(26, wl.h * 0.16));
+            b.globalAlpha = 1;
           }
-        }
-        // faint conduit runs
-        b.strokeStyle = "rgba(125,255,87,0.05)";
-        b.lineWidth = 7;
-        for (var i = 1; i <= 3; i++) {
-          b.beginPath(); b.moveTo(0, (H / 4) * i); b.lineTo(W, (H / 4) * i); b.stroke();
-        }
+        });
+        // door frame lights
+        DOORS.forEach(function (dr) {
+          b.fillStyle = "#ffb340";
+          b.shadowColor = "#ffb340"; b.shadowBlur = 5;
+          if (dr.axis === "h") {
+            b.fillRect((dr.x - 0.037) * W - 2, dr.y * H - 2, 4, 4);
+            b.fillRect((dr.x + 0.037) * W - 2, dr.y * H - 2, 4, 4);
+          } else {
+            b.fillRect(dr.x * W - 2, (dr.y - 0.048) * H - 2, 4, 4);
+            b.fillRect(dr.x * W - 2, (dr.y + 0.048) * H - 2, 4, 4);
+          }
+          b.shadowBlur = 0;
+        });
+        // hull border
+        b.strokeStyle = "rgba(127,231,255,0.35)";
+        b.lineWidth = 2;
+        b.strokeRect(1, 1, W - 2, H - 2);
+        b.strokeStyle = "rgba(127,231,255,0.12)";
+        b.lineWidth = 1;
+        b.strokeRect(5, 5, W - 10, H - 10);
         // vignette
-        var grad = b.createRadialGradient(W / 2, H / 2, Math.min(W, H) * 0.35, W / 2, H / 2, Math.max(W, H) * 0.75);
+        var grad = b.createRadialGradient(W / 2, H / 2, Math.min(W, H) * 0.35, W / 2, H / 2, Math.max(W, H) * 0.78);
         grad.addColorStop(0, "rgba(0,0,0,0)");
-        grad.addColorStop(1, "rgba(0,0,0,0.5)");
+        grad.addColorStop(1, "rgba(0,0,0,0.42)");
         b.fillStyle = grad;
         b.fillRect(0, 0, W, H);
+      }
+
+      // animated ship details drawn over the deck plan each frame
+      function drawShipLive() {
+        // warp core pulse (Engineering)
+        var cx = 0.5 * W, cy = 0.78 * H;
+        var pulse = 0.5 + 0.5 * Math.sin(elapsed * 2.6);
+        ctx.beginPath();
+        ctx.arc(cx, cy, 12 + pulse * 4, 0, Math.PI * 2);
+        ctx.fillStyle = "rgba(127,231,255," + (0.20 + pulse * 0.22).toFixed(3) + ")";
+        ctx.fill();
+        ctx.beginPath();
+        ctx.arc(cx, cy, 5.5, 0, Math.PI * 2);
+        ctx.fillStyle = "rgba(220,250,255," + (0.55 + pulse * 0.35).toFixed(3) + ")";
+        ctx.fill();
+        // transporter pad shimmer
+        var shim = 0.05 + 0.035 * Math.sin(elapsed * 1.8);
+        [[0.10, 0.21], [0.165, 0.28], [0.23, 0.21]].forEach(function (pf, pi) {
+          ctx.beginPath();
+          ctx.arc(pf[0] * W, pf[1] * H, Math.max(11, W * 0.014), 0, Math.PI * 2);
+          ctx.fillStyle = "rgba(127,231,255," + (shim + (pi === 1 ? 0.02 : 0)).toFixed(3) + ")";
+          ctx.fill();
+        });
+        // corridor runner lights
+        ctx.fillStyle = "rgba(160,220,255,0.5)";
+        var off = (elapsed * 42) % 34;
+        for (var lx = off; lx < W; lx += 34) {
+          ctx.fillRect(lx, 0.5 * H - 1, 7, 2);
+        }
       }
 
       function resize() {
@@ -387,13 +723,49 @@
         canvas.width = Math.max(2, Math.floor(W * DPR));
         canvas.height = Math.max(2, Math.floor(H * DPR));
         ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
+        buildLevel();
         paintBackground();
         clampAll();
+        drones.concat(officers).forEach(function (e) { resolveWalls(e); });
       }
 
       // ---------- entities ----------
-      var drones = [], officers = [], particles = [], texts = [];
+      var drones = [], officers = [], particles = [], texts = [], beams = [];
       var assimilatedCount = 0;
+      var dronesLost = 0;
+
+      // ---------- phasers & Borg frequency adaptation ----------
+      var FREQ_COUNT = 4;
+      var ADAPT_THRESHOLD = 3;   // landed hits on one frequency before the Borg adapt to it
+      var FREQ_COLORS = ["#ff5a4e", "#ffd34d", "#7fe7ff", "#c792ff"];
+      var freqHits = [0, 0, 0, 0];
+      var adaptedFreq = [false, false, false, false];
+      // one phaser per class — index matches UNIFORMS / CLASSES below
+      var PHASERS = {
+        command: { name: "Type III rifle", dmg: 34, cd: 1.45, range: 215, width: 3.6, color: "#ff8a4a" },
+        ops:     { name: "Type II phaser", dmg: 20, cd: 0.9,  range: 190, width: 2.6, color: "#ffd34d" },
+        science: { name: "Type I phaser",  dmg: 11, cd: 0.5,  range: 168, width: 1.8, color: "#7fe7ff" }
+      };
+      var CLASSES = ["command", "ops", "science"];
+      var RANKS = [
+        { name: "Ensign",    pips: 1, w: 30 },
+        { name: "Lieutenant", pips: 2, w: 32 },
+        { name: "Commander", pips: 3, w: 20 },
+        { name: "Captain",   pips: 4, w: 18 }
+      ];
+      function pickRank() {
+        var r = Math.random() * 100, acc = 0;
+        for (var i = 0; i < RANKS.length; i++) {
+          acc += RANKS[i].w;
+          if (r < acc) return RANKS[i];
+        }
+        return RANKS[0];
+      }
+      function adaptedCount() {
+        var n = 0;
+        for (var i = 0; i < FREQ_COUNT; i++) if (adaptedFreq[i]) n++;
+        return n;
+      }
       var tool = "drone";
       var paused = false;
       var speedMult = 1;
@@ -408,6 +780,8 @@
       function makeDrone(x, y) {
         return {
           x: x, y: y, r: 12,
+          hp: 120, maxHp: 120,
+          shieldFlash: 0, hitFlash: 0,
           phase: rand(0, Math.PI * 2),
           sway: rand(0.7, 1.3),
           target: null,
@@ -415,13 +789,22 @@
         };
       }
       function makeOfficer(x, y) {
+        var ci = Math.floor(Math.random() * UNIFORMS.length);
+        var rank = pickRank();
         return {
           x: x, y: y, r: 11,
           resistance: 100,
           heading: rand(0, Math.PI * 2),
           wanderT: rand(0, 2),
           lastContact: -99,
-          uniform: UNIFORMS[Math.floor(Math.random() * UNIFORMS.length)],
+          uniform: UNIFORMS[ci],
+          cls: CLASSES[ci],
+          rank: rank.name,
+          pips: rank.pips,
+          adaptivePhaser: rank.name === "Captain", // high rank only
+          freq: Math.floor(Math.random() * FREQ_COUNT),
+          fireCd: rand(0.2, 0.9),
+          remod: rand(5, 7),
           skin: SKIN[Math.floor(Math.random() * SKIN.length)],
           vx: 0, vy: 0
         };
@@ -433,24 +816,37 @@
       function clampAll() { drones.concat(officers).forEach(clampEntity); }
 
       function spawnOfficers(n, scatter) {
+        var pool = [ROOMS[1], ROOMS[4], ROOMS[5], ROOMS[2], ROOMS[3], ROOMS[0]];
+        for (var s = pool.length - 1; s > 0; s--) {
+          var sw = Math.floor(Math.random() * (s + 1));
+          var tmp = pool[s]; pool[s] = pool[sw]; pool[sw] = tmp;
+        }
         for (var i = 0; i < n; i++) {
-          var x, y, tries = 0;
+          var room = pool[i % pool.length];
+          var c = roomCenter(room);
+          var x = c.x, y = c.y, tries = 0;
           do {
-            x = rand(30, Math.max(60, W - 30));
-            y = rand(30, Math.max(60, H - 30));
+            x = c.x + rand(-0.055, 0.055) * W;
+            y = c.y + rand(-0.075, 0.075) * H;
             tries++;
-          } while (scatter && tries < 12 && drones.some(function (d) {
-            var dx = d.x - x, dy = d.y - y; return dx * dx + dy * dy < 130 * 130;
-          }));
-          officers.push(makeOfficer(x, y));
+          } while (tries < 14 && (!isFree(x, y, 13) || (scatter && drones.some(function (d) {
+            var dx = d.x - x, dy = d.y - y; return dx * dx + dy * dy < 120 * 120;
+          }))));
+          var spot = findFreeSpot(x, y);
+          if (spot) officers.push(makeOfficer(spot.x, spot.y));
         }
         updateBanner();
       }
 
       function reset() {
-        drones = []; officers = []; particles = []; texts = [];
-        assimilatedCount = 0; elapsed = 0;
-        drones.push(makeDrone(W * 0.22, H * 0.5));
+        drones = []; officers = []; particles = []; texts = []; beams = [];
+        assimilatedCount = 0; dronesLost = 0; elapsed = 0;
+        freqHits = [0, 0, 0, 0];
+        adaptedFreq = [false, false, false, false];
+        var beamPt = roomCenter(ROOMS[0]);
+        drones.push(makeDrone(beamPt.x, beamPt.y));
+        burst(beamPt.x, beamPt.y, "#7fe7ff");
+        texts.push({ x: beamPt.x, y: beamPt.y - 26, life: 1.8, max: 1.8, str: "BORG BEAMED ABOARD" });
         spawnOfficers(4, true);
         updateBanner();
         updateStats();
@@ -471,6 +867,42 @@
           if (q < bd) { bd = q; best = o; }
         }
         return best;
+      }
+
+      function firePhaser(o, d, spec) {
+        var f = o.freq;
+        var blocked = !o.adaptivePhaser && adaptedFreq[f];
+        beams.push({
+          x1: o.x, y1: o.y, x2: d.x, y2: d.y,
+          life: 0.09, max: 0.09,
+          color: spec.color, width: spec.width, blocked: blocked
+        });
+        sndPhaser();
+        if (o.adaptivePhaser) {
+          // rotates frequency every shot — the Borg can never lock onto it.
+          // Captain shots never count toward adaptation.
+          o.freq = Math.floor(Math.random() * FREQ_COUNT);
+          d.hp -= spec.dmg;
+          d.hitFlash = 0.12;
+          return;
+        }
+        if (blocked) {
+          d.shieldFlash = 0.65; // shot splashes off the adaptive shield — long, bright flare
+          return;
+        }
+        d.hp -= spec.dmg;
+        d.hitFlash = 0.12;
+        freqHits[f]++;
+        if (!adaptedFreq[f] && freqHits[f] >= ADAPT_THRESHOLD) {
+          adaptedFreq[f] = true;
+          // officers stuck on this frequency now need ~6s to remodulate
+          for (var oi = 0; oi < officers.length; oi++) {
+            if (!officers[oi].adaptivePhaser && officers[oi].freq === f) officers[oi].remod = rand(5.5, 6.5);
+          }
+          texts.push({ x: W / 2, y: 44, life: 3.2, max: 3.2, str: "THE BORG HAVE ADAPTED" });
+          sndAdapt();
+          updateStats();
+        }
       }
 
       function step(dt) {
@@ -510,10 +942,21 @@
             mx = Math.cos(o.heading); my = Math.sin(o.heading);
             spd = WANDER_SPEED;
           }
+          // bulkhead navigation: if a wall blocks the way ahead, steer via a doorway
+          if (lineBlocked(o.x, o.y, o.x + mx * 48, o.y + my * 48)) {
+            var dstX = Math.max(18, Math.min(W - 18, o.x + mx * 150));
+            var dstY = Math.max(18, Math.min(H - 18, o.y + my * 150));
+            var wpO = findWaypoint(o.x, o.y, dstX, dstY);
+            if (wpO) {
+              var wdx = wpO.x - o.x, wdy = wpO.y - o.y, wl2 = Math.hypot(wdx, wdy) || 1;
+              mx = wdx / wl2; my = wdy / wl2;
+            }
+          }
           o.x += mx * spd * dt;
           o.y += my * spd * dt;
           o.vx = mx * spd; o.vy = my * spd;
           clampEntity(o);
+          resolveWalls(o);
 
           // resistance recovery once clear of contact
           if (elapsed - o.lastContact > 1.4 && o.resistance < 100) {
@@ -521,29 +964,79 @@
           }
         }
 
+        // officers return fire
+        for (var fi = 0; fi < officers.length; fi++) {
+          var fo = officers[fi];
+          fo.fireCd -= dt;
+          // remodulate once the Borg have adapted to this officer's frequency
+          if (!fo.adaptivePhaser && adaptedFreq[fo.freq]) {
+            fo.remod -= dt;
+            if (fo.remod <= 0) {
+              var open = [];
+              for (var b = 0; b < FREQ_COUNT; b++) if (!adaptedFreq[b]) open.push(b);
+              if (open.length) fo.freq = open[Math.floor(Math.random() * open.length)];
+              fo.remod = rand(5, 7);
+            }
+          }
+          if (fo.fireCd > 0 || !drones.length) continue;
+          var nd = null, ndq = Infinity;
+          for (var g = 0; g < drones.length; g++) {
+            var dd = drones[g], ddx = dd.x - fo.x, ddy = dd.y - fo.y, qq = ddx * ddx + ddy * ddy;
+            if (qq < ndq) { ndq = qq; nd = dd; }
+          }
+          var spec = PHASERS[fo.cls];
+          if (!nd || ndq > spec.range * spec.range) continue;
+          if (lineBlocked(fo.x, fo.y, nd.x, nd.y)) continue; // bulkheads block phaser fire
+          fo.fireCd = spec.cd * (fo.resistance < 40 ? 1.35 : 1); // weakening officers fire slower
+          firePhaser(fo, nd, spec);
+        }
+
+        // drones destroyed by phaser fire
+        for (var z = drones.length - 1; z >= 0; z--) {
+          if (drones[z].hp <= 0) {
+            var dead = drones.splice(z, 1)[0];
+            dronesLost++;
+            burst(dead.x, dead.y, "#ffb340");
+            texts.push({ x: dead.x, y: dead.y - 20, life: 1.4, max: 1.4, str: "DRONE DESTROYED" });
+            sndDroneDown();
+          }
+        }
+
         // drones hunt
         for (var k = 0; k < drones.length; k++) {
           var dr = drones[k];
+          dr.shieldFlash = Math.max(0, dr.shieldFlash - dt);
+          dr.hitFlash = Math.max(0, dr.hitFlash - dt);
           dr.target = nearestOfficer(dr);
           dr.channeling = null;
           if (!dr.target) continue;
           var t = dr.target;
           var dx = t.x - dr.x, dy = t.y - dr.y;
           var dist = Math.hypot(dx, dy) || 1;
-          if (dist <= CONTACT) {
+          if (dist <= CONTACT && !lineBlocked(dr.x, dr.y, t.x, t.y)) {
             dr.channeling = t;
             t.resistance -= DRAIN * dt;
             t.lastContact = elapsed;
           } else {
-            // zombie shamble: speed pulses, path sways side to side
-            var gait = 0.72 + 0.28 * Math.sin(elapsed * 5.2 * dr.sway + dr.phase);
-            var sp = DRONE_SPEED * adapt * gait;
-            var ux = dx / dist, uy = dy / dist;
-            var swayAmt = Math.sin(elapsed * 2.1 * dr.sway + dr.phase) * 0.35;
-            var px = -uy * swayAmt, py = ux * swayAmt;
-            dr.x += (ux + px) * sp * dt;
-            dr.y += (uy + py) * sp * dt;
+            // head for the officer — through a doorway if a bulkhead is in the way
+            var mtX = t.x, mtY = t.y, viaDoor = false;
+            if (lineBlocked(dr.x, dr.y, t.x, t.y)) {
+              var wpD = findWaypoint(dr.x, dr.y, t.x, t.y);
+              if (wpD) { mtX = wpD.x; mtY = wpD.y; viaDoor = true; }
+            }
+            var mdx = mtX - dr.x, mdy = mtY - dr.y;
+            var mDist = Math.hypot(mdx, mdy) || 1;
+            if (mDist > 4) {
+              var gait = 0.72 + 0.28 * Math.sin(elapsed * 5.2 * dr.sway + dr.phase);
+              var sp = DRONE_SPEED * adapt * gait;
+              var ux = mdx / mDist, uy = mdy / mDist;
+              var swayAmt = Math.sin(elapsed * 2.1 * dr.sway + dr.phase) * (viaDoor ? 0.08 : 0.35);
+              var px = -uy * swayAmt, py = ux * swayAmt;
+              dr.x += (ux + px) * sp * dt;
+              dr.y += (uy + py) * sp * dt;
+            }
             clampEntity(dr);
+            resolveWalls(dr);
           }
         }
 
@@ -560,7 +1053,11 @@
           }
         }
 
-        // particles & texts
+        // beams, particles & texts
+        for (var bm2 = beams.length - 1; bm2 >= 0; bm2--) {
+          beams[bm2].life -= dt;
+          if (beams[bm2].life <= 0) beams.splice(bm2, 1);
+        }
         for (var p = particles.length - 1; p >= 0; p--) {
           var pt = particles[p];
           pt.life -= dt;
@@ -576,15 +1073,23 @@
         updateBanner();
       }
 
-      function burst(x, y) {
+      function burst(x, y, color) {
         for (var i = 0; i < 26; i++) {
           var a = rand(0, Math.PI * 2), v = rand(30, 130);
-          particles.push({ x: x, y: y, vx: Math.cos(a) * v, vy: Math.sin(a) * v, life: rand(0.35, 0.8), max: 0.8 });
+          particles.push({ x: x, y: y, vx: Math.cos(a) * v, vy: Math.sin(a) * v, life: rand(0.35, 0.8), max: 0.8, color: color || "#7dff57" });
         }
       }
 
       // ---------- drawing ----------
       function drawOfficer(o) {
+        // Captain's gold ring — marks the adaptive phaser carrier
+        if (o.adaptivePhaser) {
+          ctx.beginPath();
+          ctx.arc(o.x, o.y, o.r + 2.5, 0, Math.PI * 2);
+          ctx.strokeStyle = "rgba(242,193,78,0.85)";
+          ctx.lineWidth = 1.6;
+          ctx.stroke();
+        }
         // resistance ring
         if (o.resistance < 100) {
           ctx.beginPath();
@@ -614,6 +1119,21 @@
         // commbadge glint
         ctx.fillStyle = "#d7dee6";
         ctx.fillRect(o.x + 3.4, o.y + 2.4, 2.4, 3);
+        // rank pips on the chest
+        ctx.fillStyle = "#f7d774";
+        for (var pp = 0; pp < o.pips; pp++) {
+          ctx.beginPath();
+          ctx.arc(o.x - (o.pips - 1) * 2 + pp * 4, o.y + 6.8, 1.1, 0, Math.PI * 2);
+          ctx.fill();
+        }
+        // current phaser frequency dot
+        ctx.beginPath();
+        ctx.arc(o.x + 9, o.y - 9, 2.1, 0, Math.PI * 2);
+        ctx.fillStyle = FREQ_COLORS[o.freq];
+        ctx.fill();
+        ctx.lineWidth = 0.8;
+        ctx.strokeStyle = "rgba(0,0,0,0.6)";
+        ctx.stroke();
       }
 
       function drawDrone(d) {
@@ -641,7 +1161,7 @@
         // body: dark plating
         ctx.beginPath();
         ctx.arc(0, 0, d.r, 0, Math.PI * 2);
-        ctx.fillStyle = "#22282a";
+        ctx.fillStyle = d.hitFlash > 0 ? "#57665c" : "#22282a";
         ctx.fill();
         ctx.lineWidth = 2;
         ctx.strokeStyle = "#59c93e";
@@ -676,12 +1196,78 @@
         ctx.beginPath(); ctx.arc(-6, 5 + bob * 0.2, 1.6, 0, Math.PI * 2); ctx.fill();
         ctx.beginPath(); ctx.arc(6.5, 6 - bob * 0.2, 1.3, 0, Math.PI * 2); ctx.fill();
         ctx.restore();
+        // adaptive shield: clearly visible bubble once any frequency is adapted,
+        // flaring very bright when a shot splashes off it
+        var hasShield = adaptedCount() > 0;
+        var shieldA = 0;
+        if (hasShield) shieldA = 0.42 + 0.10 * Math.sin(elapsed * 3 + d.phase);
+        if (d.shieldFlash > 0) shieldA = Math.max(shieldA, 0.45 + (d.shieldFlash / 0.65) * 0.55);
+        if (shieldA > 0.01) {
+          // outer glow ring
+          ctx.beginPath();
+          ctx.arc(d.x, d.y, d.r + 9, 0, Math.PI * 2);
+          ctx.strokeStyle = "rgba(125,255,87," + (shieldA * 0.45).toFixed(3) + ")";
+          ctx.lineWidth = 5;
+          ctx.stroke();
+          ctx.beginPath();
+          ctx.arc(d.x, d.y, d.r + 7, 0, Math.PI * 2);
+          ctx.strokeStyle = "rgba(180,255,160," + Math.min(1, shieldA + 0.25).toFixed(3) + ")";
+          ctx.lineWidth = 2.6;
+          ctx.stroke();
+          ctx.beginPath();
+          ctx.arc(d.x, d.y, d.r + 7, 0, Math.PI * 2);
+          ctx.fillStyle = "rgba(125,255,87," + (shieldA * 0.32).toFixed(3) + ")";
+          ctx.fill();
+          // ADAPTED tag — unmissable label above the shield
+          ctx.font = "700 8.5px Orbitron, sans-serif";
+          ctx.textAlign = "center";
+          var tagW = 52, tagX = d.x - tagW / 2, tagY = d.y - d.r - 26;
+          ctx.fillStyle = "rgba(5,20,5,0.88)";
+          ctx.fillRect(tagX, tagY, tagW, 13);
+          ctx.strokeStyle = "rgba(125,255,87,0.9)";
+          ctx.lineWidth = 1;
+          ctx.strokeRect(tagX + 0.5, tagY + 0.5, tagW - 1, 12);
+          ctx.fillStyle = "#7dff57";
+          ctx.fillText("ADAPTED", d.x, tagY + 10);
+        }
+        // hull bar once damaged — shifted up when the ADAPTED tag is showing
+        if (d.hp < d.maxHp) {
+          var barY = hasShield ? d.y - d.r - 11 - 0 : d.y - d.r - 11;
+          // when shield tag is present, hull bar sits just below it isn't needed — keep bar at its usual spot under tag
+          if (hasShield) barY = d.y - d.r - 11;
+          var frac = Math.max(0, d.hp / d.maxHp);
+          ctx.fillStyle = "rgba(0,0,0,0.65)";
+          ctx.fillRect(d.x - 13, barY, 26, 4);
+          ctx.fillStyle = frac > 0.45 ? "#7dff57" : (frac > 0.22 ? "#ffb340" : "#ff5a4e");
+          ctx.fillRect(d.x - 12, barY + 1, 24 * frac, 2);
+        }
       }
 
       function draw() {
         ctx.clearRect(0, 0, W, H);
         ctx.drawImage(bgCanvas, 0, 0, W, H);
+        drawShipLive();
         var i;
+        // phaser beams under the units
+        for (i = 0; i < beams.length; i++) {
+          var bm = beams[i];
+          ctx.globalAlpha = Math.max(0, bm.life / bm.max) * (bm.blocked ? 0.75 : 0.9);
+          ctx.beginPath();
+          ctx.moveTo(bm.x1, bm.y1);
+          ctx.lineTo(bm.x2, bm.y2);
+          ctx.strokeStyle = bm.color;
+          ctx.lineWidth = bm.width;
+          ctx.stroke();
+          if (!bm.blocked) {
+            ctx.beginPath();
+            ctx.moveTo(bm.x1, bm.y1);
+            ctx.lineTo(bm.x2, bm.y2);
+            ctx.strokeStyle = "rgba(255,255,255,0.85)";
+            ctx.lineWidth = 1;
+            ctx.stroke();
+          }
+        }
+        ctx.globalAlpha = 1;
         for (i = 0; i < officers.length; i++) drawOfficer(officers[i]);
         for (i = 0; i < drones.length; i++) drawDrone(drones[i]);
         for (i = 0; i < particles.length; i++) {
@@ -689,7 +1275,7 @@
           ctx.globalAlpha = Math.max(0, p.life / p.max);
           ctx.beginPath();
           ctx.arc(p.x, p.y, 2.4, 0, Math.PI * 2);
-          ctx.fillStyle = "#7dff57";
+          ctx.fillStyle = p.color || "#7dff57";
           ctx.fill();
         }
         ctx.globalAlpha = 1;
@@ -705,7 +1291,7 @@
         if (!drones.length && !officers.length) {
           ctx.font = "600 17px Rajdhani, sans-serif";
           ctx.fillStyle = "rgba(230,242,223,0.75)";
-          ctx.fillText("The deck is empty. Deploy a drone, then beam down some officers.", W / 2, H / 2);
+          ctx.fillText("The deck is empty. Deploy a drone, then beam down some officers.", W / 2, H * 0.5 + 4);
         }
       }
 
@@ -714,24 +1300,96 @@
       var elOfficers = document.getElementById("st-officers");
       var elAssim = document.getElementById("st-assimilated");
       var elAdapt = document.getElementById("st-adapt");
+      var elLost = document.getElementById("st-lost");
+      var elShield = document.getElementById("st-shield");
+      var elFreqDots = document.getElementById("freq-dots");
+      var freqDotEls = [], freqPipEls = [];
+      (function buildFreqDots() {
+        if (!elFreqDots) return;
+        for (var fi = 0; fi < FREQ_COUNT; fi++) {
+          var unit = document.createElement("div");
+          unit.className = "freq-unit";
+          unit.style.color = FREQ_COLORS[fi];
+          var dot = document.createElement("div");
+          dot.className = "freq-dot";
+          dot.style.borderColor = FREQ_COLORS[fi];
+          dot.style.color = FREQ_COLORS[fi];
+          dot.title = "Frequency " + (fi + 1);
+          var pips = document.createElement("div");
+          pips.className = "freq-pips";
+          var pipList = [];
+          for (var pi = 0; pi < ADAPT_THRESHOLD; pi++) {
+            var pip = document.createElement("span");
+            pip.className = "freq-pip";
+            pips.appendChild(pip);
+            pipList.push(pip);
+          }
+          unit.appendChild(dot);
+          unit.appendChild(pips);
+          elFreqDots.appendChild(unit);
+          freqDotEls.push(dot);
+          freqPipEls.push(pipList);
+        }
+      })();
+      function updateFreqDots() {
+        for (var fi = 0; fi < FREQ_COUNT; fi++) {
+          var dot = freqDotEls[fi];
+          if (!dot) continue;
+          var hits = Math.min(freqHits[fi], ADAPT_THRESHOLD);
+          var isAdapted = adaptedFreq[fi];
+          if (isAdapted) {
+            dot.classList.add("adapted");
+            dot.style.background = FREQ_COLORS[fi];
+            dot.style.opacity = "1";
+          } else {
+            dot.classList.remove("adapted");
+            if (hits === 0) { dot.style.background = "transparent"; dot.style.opacity = "1"; }
+            else if (hits === 1) { dot.style.background = FREQ_COLORS[fi]; dot.style.opacity = "0.45"; }
+            else if (hits === 2) { dot.style.background = FREQ_COLORS[fi]; dot.style.opacity = "0.75"; }
+            else { dot.style.background = FREQ_COLORS[fi]; dot.style.opacity = "1"; }
+          }
+          var pips = freqPipEls[fi] || [];
+          for (var pi = 0; pi < pips.length; pi++) {
+            if (isAdapted || pi < hits) {
+              pips[pi].classList.add("on");
+              pips[pi].style.background = FREQ_COLORS[fi];
+            } else {
+              pips[pi].classList.remove("on");
+              pips[pi].style.background = "";
+            }
+          }
+        }
+      }
       var statT = 0;
       function updateStats() {
         elDrones.textContent = drones.length;
         elOfficers.textContent = officers.length;
         elAssim.textContent = assimilatedCount;
         elAdapt.textContent = "+" + Math.round((adaptation() - 1) * 100) + "%";
+        elLost.textContent = dronesLost;
+        elShield.textContent = adaptedCount() + "/" + FREQ_COUNT;
+        updateFreqDots();
       }
       var banner = document.getElementById("banner");
-      var bannerShown = false;
+      var bannerMode = "";
       function updateBanner() {
-        var show = officers.length === 0 && assimilatedCount > 0;
-        if (show !== bannerShown) {
-          bannerShown = show;
-          banner.classList.toggle("show", show);
-          if (show) {
+        var mode = "";
+        if (officers.length === 0 && assimilatedCount > 0) mode = "win";
+        else if (drones.length === 0 && officers.length > 0) mode = "lose";
+        if (mode !== bannerMode) {
+          bannerMode = mode;
+          banner.classList.toggle("show", !!mode);
+          if (mode === "win") {
+            document.getElementById("banner-big").textContent = "Resistance was futile";
             document.getElementById("banner-sub").textContent =
               assimilatedCount + (assimilatedCount === 1 ? " officer has" : " officers have") +
               " been added to the Collective. The deck belongs to the Borg.";
+            document.getElementById("banner-btn").textContent = "Beam down 5 more officers";
+          } else if (mode === "lose") {
+            document.getElementById("banner-big").textContent = "The Collective has been destroyed";
+            document.getElementById("banner-sub").textContent =
+              "Starfleet's phasers burned through every drone on the deck. Deploy another drone to resume assimilation.";
+            document.getElementById("banner-btn").textContent = "Deploy a drone";
           }
         }
       }
@@ -759,10 +1417,14 @@
       canvas.addEventListener("pointerdown", function (evt) {
         ensureAudio();
         var p = canvasPos(evt);
-        if (tool === "drone") {
-          drones.push(makeDrone(p.x, p.y)); sndPlace();
+        var spot = (tool === "erase") ? null : findFreeSpot(p.x, p.y);
+        if ((tool === "drone" || tool === "officer") && !spot) {
+          texts.push({ x: p.x, y: Math.max(16, p.y - 14), life: 1, max: 1, str: "BULKHEAD" });
+          sndErase();
+        } else if (tool === "drone") {
+          drones.push(makeDrone(spot.x, spot.y)); sndPlace();
         } else if (tool === "officer") {
-          officers.push(makeOfficer(p.x, p.y)); sndPlace();
+          officers.push(makeOfficer(spot.x, spot.y)); sndPlace();
         } else {
           // erase nearest within 34px
           var best = null, bd = 34 * 34, list = null, idx = -1;
@@ -790,8 +1452,14 @@
       document.getElementById("tool-erase").addEventListener("click", function () { setTool("erase"); });
 
       document.getElementById("add-officers").addEventListener("click", function () { ensureAudio(); spawnOfficers(5, true); updateStats(); });
-      document.getElementById("add-drone").addEventListener("click", function () { ensureAudio(); drones.push(makeDrone(rand(30, W - 30), rand(30, H - 30))); updateStats(); });
-      document.getElementById("banner-btn").addEventListener("click", function () { ensureAudio(); spawnOfficers(5, true); updateStats(); });
+      document.getElementById("add-drone").addEventListener("click", function () { ensureAudio(); var bp = roomCenter(ROOMS[0]); var sp2 = findFreeSpot(bp.x + rand(-26, 26), bp.y + rand(-20, 20)) || findFreeSpot(W / 2, H / 2); if (sp2) { drones.push(makeDrone(sp2.x, sp2.y)); burst(sp2.x, sp2.y, "#7fe7ff"); } updateStats(); });
+      document.getElementById("banner-btn").addEventListener("click", function () {
+        ensureAudio();
+        if (bannerMode === "lose") drones.push(makeDrone(W / 2, H / 2));
+        else spawnOfficers(5, true);
+        updateBanner();
+        updateStats();
+      });
 
       var pauseBtn = document.getElementById("pause-btn");
       pauseBtn.addEventListener("click", function () {
